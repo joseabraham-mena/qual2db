@@ -117,7 +117,7 @@ Block.questions = relationship(
 
 
 class SubQuestion(Base):
-    __tablename__ = 'subquestion'
+    __tablename__ = 'answer'
 
     id = Column(Integer, primary_key=True)
     qid = Column(Integer)
