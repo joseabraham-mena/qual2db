@@ -281,8 +281,7 @@ def schema_mapper(Survey, schema):
         data = schema_copy['questions'][question.qid]
 
         try:
-            question.subquestions = entity_mapper(
-                datamodel.Answers, data['subQuestions'])
+            question.subquestions = entity_mapper(datamodel.SubQuestion, data['subQuestions'])
         except:
             pass
 
