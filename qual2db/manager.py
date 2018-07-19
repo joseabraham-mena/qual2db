@@ -27,15 +27,20 @@ config_file = os.path.join(package_directory, 'config.ini')
 config = configparser.ConfigParser()
 config.read(config_file)
 
+tempPath = os.getcwd() + "\\temp\\"
+
+if not os.path.isdir(tempPath):
+    os.makedirs(tempPath)
+
 download_directory = config['Basic']['download_directory']
 
 qual_creds = {
-    'baseurl': config['Qualtrics Credentials']['baseurl'],
-    'token': config['Qualtrics Credentials']['Token']
+    'baseurl': config['Qualtrics_Credentials']['baseurl'],
+    'token': config['Qualtrics_Credentials']['Token']
 }
 
 sql_creds = {
-    'constr': config['MySQL Credentials']['constr']
+    'constr': config['MySQL_Credentials']['constr']
 }
 
 # -----------------------------------------------------------------------
@@ -277,7 +282,7 @@ def schema_mapper(Survey, schema):
 
         try:
             question.subquestions = entity_mapper(
-                datamodel.SubQuestion, data['subQuestions'])
+                datamodel.Answers, data['subQuestions'])
         except:
             pass
 
