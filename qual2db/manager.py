@@ -60,7 +60,8 @@ default_respondent_fields = [
     'RecipientEmail',
     'RecipientFirstName',
     'RecipientLastName',
-    'Status'
+    'Status',
+    'TestED'
 ]
 
 global embedded_data_names
@@ -221,6 +222,7 @@ class QualtricsInterface:
 
 
 class SurveyManager(DatabaseInterface, QualtricsInterface):
+
     """Interface for working with sqlalchemy, sqlite3, and data classes"""
 
     def __init__(self, constr=sql_creds['constr'], Base=Base):
@@ -231,32 +233,85 @@ class SurveyManager(DatabaseInterface, QualtricsInterface):
             func = self.bind_table(table)
             setattr(self, table, func)
 
+    #def add_survey(self, qid):
+    #    """Adds a survey to the database."""
+    #    self.connect()
+    #    survey = datamodel.Survey()
+            
+    #    schema = self.getSurvey(qid)
+    #    schema_mapper(survey, schema)
+        
+    #    data = self.getData(qid)
+    #    index = build_index(survey, schema)
+    #    parse_responses(survey, schema, data)
+    #    self.add(survey)
+    #    self.commit()
+    #    return survey
+
+
     def add_survey(self, qid, replace=False):
         """Adds a survey to the database."""
         self.connect()
-
-        existing = self.query(datamodel.Survey).filter(
-            datamodel.Survey.qid == qid).first()
-
+ 
+        existing = self.query(datamodel.Survey).filter(datamodel.Survey.qid == qid).first()
+ 
         if existing:
             if not replace:
                 return existing
             else:
                 self.delete(existing)
-
+ 
         schema = self.getSurvey(qid)
         data = self.getData(qid)
-
+ 
         survey = datamodel.Survey()
         schema_mapper(survey, schema)
         self.add(survey)
         self.commit()
-
+ 
         index = build_index(survey, schema)
         parse_responses(survey, schema, data)
         self.add(survey)
         self.commit()
-        return survey
+        return survey    
+    
+
+    #def add_schema(self, qid):
+    #    """Adds the schema to the database."""
+    #    self.connect()
+    #    survey = datamodel.Survey()
+    #    schema = self.getSurvey(qid)
+    #    schema_mapper(survey, schema)
+    #    self.add(survey)
+    #    self.commit()
+    #    return survey
+
+    #def add_data(self, qid):
+    #    """Adds the data to the database."""
+    #    self.connect()
+    #    survey = self.query(datamodel.Survey).filter(datamodel.Survey.qid == qid).first()
+    #    # if not embedded_data_names:
+    #    embedded_data_names = self.query(datamodel.Question).filter(datamodel.Question.survey_id == survey.id, datamodel.Question.type == "ED").distinct()
+    #    schema = self.getSurvey(qid)
+    #    schema_copy = schema['embeddedData']
+    #    for data_row in schema_copy:
+    #        key = 'name'
+    #        if (key in data_row.keys()):
+    #            embedded_data_names.append(data_row[key])
+    #    data = self.getData(qid)
+    #    index = build_index(survey, schema)
+    #    parse_responses(survey, schema, data)
+    #    self.add(survey)
+    #    self.commit()
+    #    return survey
+        
+    #def delete_data(self, qid):
+    #    self.connect()
+    #    survey = self.query(datamodel.Survey).filter(datamodel.Survey.qid == qid).first()
+    #    respondents = self.query(datamodel.Respondent).filter(datamodel.Respondent.survey_id == survey.id)
+    #    for respondent in respondents:
+    #        self.delete(respondent)
+    #    self.commit()
 
 # -----------------------------------------------------------------------
 # Data conversion functions
@@ -429,6 +484,7 @@ def parse_responses(Survey, schema, data):
         for record in responses:
             response = parse_response(index, record, responses[record])
             if response:
+                # Populate survey_id column with corresponding survey db id by querying and matching on the qid
                 respondent.responses.append(response)
 
         Survey.respondents.append(respondent)
