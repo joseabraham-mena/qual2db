@@ -108,8 +108,7 @@ class DatabaseInterface:
                 cols = archetype.__table__.columns.keys()
                 data = interface.session.query(archetype).all()
 
-                df = pd.DataFrame([[getattr(i, j) for j in cols] + [i]
-                                   for i in data], columns=cols + ['obj'])
+                df = pd.DataFrame([[getattr(i, j) for j in cols] + [i] for i in data], columns=cols + ['obj'])
             else:
                 df = pd.read_sql_table(table_name, self.engine)
                 if sql:
@@ -127,7 +126,7 @@ class QualtricsInterface:
         pass
 
     def api_request(self, call='surveys', method='GET', parms=None, export=False, debug=False):
-        """Makes a api request
+        """Makes an api request
 
         Parameters
         ----------
@@ -184,6 +183,7 @@ class QualtricsInterface:
 
     def getSurvey(self, qid, debug=False):
         """Quickly creates a dictionary with basic details about a given survey."""
+        # print('GET SURVEY: ' + str(self.api_request(call='surveys/' + qid,debug=debug))) This prints a lot of information!
         schema = self.api_request(call='surveys/' + qid, debug=debug)
         return schema
 
@@ -199,25 +199,23 @@ class QualtricsInterface:
             parms['lastResponseId'] = last_response
 
         print('Downloading data.')
-        data = self.api_request(call='responseexports/',
-                                method='POST', parms=parms, debug=debug)
+        data = self.api_request(call='responseexports/', method='POST', parms=parms, debug=debug)
         export_id = data['id']
 
         complete = 0
         while complete < 100:
-            progress = self.api_request(
-                call='responseexports/' + export_id, method='GET', debug=debug)
+            progress = self.api_request(call='responseexports/' + export_id, method='GET', debug=debug)
             complete = progress['percentComplete']
             print(complete)
 
         download_call = 'responseexports/' + export_id + '/file'
-        download_path = self.api_request(
-            call=download_call, method='GET', export=True, debug=debug)
+        download_path = self.api_request(call=download_call, method='GET', export=True, debug=debug)
 
         #data_file = download_path + '\\' + os.listdir(download_path)[0]
         data_file = os.path.join(download_path, os.listdir(download_path)[0])
 
         data = open(data_file, 'r')
+        data_path_folder = os.listdir(self.api_request(call=download_call, method = 'GET', export = True, debug = debug))[0]
 
         return json.load(data)['responses']
 
