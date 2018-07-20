@@ -448,7 +448,7 @@ def parse_response(index, column, entry):
     return response
 
 
-def parse_responses(Survey, schema, data):
+def parse_responses(sm, Survey, schema, data, qid):
     index = build_index(Survey, schema)
 
     for responses in data:
@@ -457,6 +457,10 @@ def parse_responses(Survey, schema, data):
         for record in responses:
             response = parse_response(index, record, responses[record])
             if response:
+                # Populate survey_id column with corresponding survey db id by querying and matching on the qid
+                response.survey_id = sm.query(datamodel.Survey) \
+                                        .with_entities(datamodel.Survey.id)\
+                                        .filter(datamodel.Survey.qid == qid)
                 respondent.responses.append(response)
 
         Survey.respondents.append(respondent)
