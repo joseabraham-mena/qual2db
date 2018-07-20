@@ -28,11 +28,10 @@ config = configparser.ConfigParser()
 config.read(config_file)
 
 tempPath = os.getcwd() + "\\temp\\"
-
 if not os.path.isdir(tempPath):
     os.makedirs(tempPath)
 
-download_directory = config['Basic']['download_directory']
+download_directory = tempPath
 
 qual_creds = {
     'baseurl': config['Qualtrics_Credentials']['baseurl'],
@@ -394,10 +393,8 @@ def parse_response(index, column, entry):
     response.question_id = question_id
 
     try:
-        subquestion_qid = index['exportColumnMap'][
-            column]['subQuestion'].split('.')[-1]
-        subquestion_id = index['subquestions'][
-            question_qid][int(subquestion_qid)].id
+        subquestion_qid = index['exportColumnMap'][column]['subQuestion'].split('.')[-1]
+        subquestion_id = index['subquestions'][question_qid][int(subquestion_qid)].id
         response.subquestion_id = subquestion_id
     except:
         pass
