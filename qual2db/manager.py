@@ -63,8 +63,11 @@ default_respondent_fields = [
     'Status'
 ]
 
+global embedded_data_names
+embedded_data_names = []
+
 # -----------------------------------------------------------------------
-# Mangement Classes
+# Management Classes
 # -----------------------------------------------------------------------
 
 
