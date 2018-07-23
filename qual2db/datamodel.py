@@ -164,8 +164,7 @@ class EmbeddedData(Base):
     survey_id = Column(Integer, ForeignKey('survey.id'))
     survey = relationship(Survey, back_populates='embedded_data')
 
-Survey.embedded_data = relationship(
-    'EmbeddedData', order_by=EmbeddedData.id, back_populates='survey', cascade='save-update, merge, delete')
+Survey.embedded_data = relationship('EmbeddedData', order_by=EmbeddedData.id, back_populates='survey', cascade='save-update, merge, delete')
 
 
 class Respondent(Base):
