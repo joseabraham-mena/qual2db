@@ -288,7 +288,7 @@ class SurveyManager(DatabaseInterface, QualtricsInterface):
         self.add(survey)
         self.commit()
         return survey
-
+        
     def delete_data(self, qid):
         self.connect()
         survey = self.query(datamodel.Survey).filter(datamodel.Survey.qid == qid).first()
@@ -311,27 +311,32 @@ def schema_mapper(Survey, schema):
     block_map = map_blocks(schema_copy)
     block_index = Survey.get_blocks()
 
-    Survey.questions = entity_mapper(
-        datamodel.Question, schema_copy['questions'])
+    Survey.questions = entity_mapper(datamodel.Question, schema_copy['questions'])
+    Survey.questions += entity_mapper(datamodel.Question, schema_copy['embeddedData'], None, True) #This didn't really do anything, but looks promising
 
     # add the choices and subquestions to each question
     for question in Survey.questions:
         # question.parse_question_text()
-        data = schema_copy['questions'][question.qid]
+        if question.qid not in embedded_data_names:
+            data = schema_copy['questions'][question.qid]
 
-        try:
-            question.subquestions = entity_mapper(datamodel.SubQuestion, data['subQuestions'])
-        except:
+            try:
+                question.subquestions = entity_mapper(datamodel.SubQuestion, data['subQuestions'])
+                print("### line 324 subquestion entity mapper")
+            except:
+                pass
+
+            try:
+                question.choices = entity_mapper(datamodel.Choice, data['choices'])
+                print("*** line 330 subquestion entity mapper")
+            except:
+                pass
+
+            # add to block
+            related_block = block_map[question.qid]
+            block_index[related_block].questions.append(question)
+        else:
             pass
-
-        try:
-            question.choices = entity_mapper(datamodel.Choice, data['choices'])
-        except:
-            pass
-
-        # add to block
-        related_block = block_map[question.qid]
-        block_index[related_block].questions.append(question)
 
     return Survey
 
@@ -376,19 +381,25 @@ def data_mapper(instance, dictionary, skip_keys=['choices', 'subQuestions'], qid
     return instance
 
 
-def entity_mapper(Entity, entity_data, skip_keys=None):
+def entity_mapper(Entity, entity_data, skip_keys=None, embedded_data = False):
     entity_list = []
-    for entity in entity_data:
-        i = Entity()
-        try:
-            data = entity_data[entity]
-        except:
-            data = entity
-        if skip_keys:
-            data_mapper(i, data, skip_keys, qid=entity)
-        else:
-            data_mapper(i, data, qid=entity)
-        entity_list.append(i)
+    if embedded_data == True:
+        for entity in entity_data:
+            i = Entity()
+            embeddedData_mapper(i, entity)
+            entity_list.append(i)
+    else:
+        for entity in entity_data:
+            i = Entity()
+            try:
+                data = entity_data[entity]
+            except:
+                data = entity
+            if skip_keys:
+                data_mapper(i, data, skip_keys, qid=entity)
+            else:
+                data_mapper(i, data, qid=entity)
+            entity_list.append(i)
     return entity_list
 
 
@@ -402,6 +413,22 @@ def map_blocks(schema):
                 block_map[element['questionId']] = block
     return block_map
 
+def embeddedData_mapper(instance, dictionary, skip_keys=None):
+    dictionary_copy = dictionary.copy()
+
+    drop_keys = []
+
+    # find fields with subfields and parse them out
+    key = 'name'
+    if (key in dictionary_copy.keys()):
+        setattr(instance, 'questionText', dictionary_copy.get(key))
+        setattr(instance, 'questionLabel', dictionary_copy.get(key))
+        setattr(instance, 'qid', dictionary_copy.get(key))
+        setattr(instance, 'type', 'ED')
+        embedded_data_names.append(dictionary_copy.get(key))
+
+    print(embedded_data_names)
+    return instance
 
 def build_index(Survey, schema):
     index = dict()
@@ -410,6 +437,7 @@ def build_index(Survey, schema):
     index['subquestions'] = Survey.get_subquestions()
     index['choices'] = Survey.get_choices()
     index['embedded_data'] = Survey.get_embedded_data()
+    print(str(index))
     return index
 
 
@@ -421,9 +449,12 @@ def parse_response(index, column, entry):
         return False
 
     # column is embedded data
-    if column in index['embedded_data']:
-        response.embedded_data_id = embedded_data_id = index[
-            'embedded_data'][column].id
+        #if column in index['embedded_data']:
+    #    response.embedded_data_id = embedded_data_id = index['embedded_data'][column].id
+    #    response.textEntry = entry
+    #    return response
+    if column in embedded_data_names:
+        response.question_id = index['questions'][column].id
         response.textEntry = entry
         return response
 
@@ -431,6 +462,16 @@ def parse_response(index, column, entry):
     question_id = index['questions'][question_qid].id
     question_type = index['questions'][question_qid].type
     response.question_id = question_id
+
+    #if column in index['embedded_data']:
+    #    response.embedded_data_id = embedded_data_id = index['embedded_data'][column].id
+    #    response.textEntry = entry
+    #    return response
+
+    #question_qid = index['exportColumnMap'][column]['question']
+    #question_id = index['questions'][question_qid].id
+    #question_type = index['questions'][question_qid].type
+    #response.question_id = question_id
 
     try:
         subquestion_qid = index['exportColumnMap'][column]['subQuestion'].split('.')[-1]
@@ -450,6 +491,8 @@ def parse_response(index, column, entry):
         response.textEntry = entry
     elif question_type == 'TE':
         response.textEntry = entry
+    elif question_type == 'ValidNumber':
+        response.textEntry = entry
     else:
         try:
             response.choice_id = index['choices'][question_qid][int(entry)].id
@@ -459,7 +502,7 @@ def parse_response(index, column, entry):
     return response
 
 
-def parse_responses(sm, Survey, schema, data, qid):
+def parse_responses(Survey, schema, data):
     index = build_index(Survey, schema)
 
     for responses in data:
