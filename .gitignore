@@ -1,5 +1,5 @@
 *.pyc
 *.sqlite
 *.db
-*.ini
+*config.ini
 \.vs/

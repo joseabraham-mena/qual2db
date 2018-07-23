@@ -60,8 +60,7 @@ default_respondent_fields = [
     'RecipientEmail',
     'RecipientFirstName',
     'RecipientLastName',
-    'Status',
-    'TestED'
+    'Status'
 ]
 
 global embedded_data_names
