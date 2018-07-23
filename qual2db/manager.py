@@ -265,12 +265,13 @@ class SurveyManager(DatabaseInterface, QualtricsInterface):
         data = self.getData(qid)
  
         survey = datamodel.Survey()
+        schema = self.getSurvey(qid)
         schema_mapper(survey, schema)
         self.add(survey)
         self.commit()
  
         index = build_index(survey, schema)
-        parse_responses(survey, schema, data)
+        parse_responses(self, survey, schema, data)
         self.add(survey)
         self.commit()
         return survey    
@@ -475,7 +476,7 @@ def parse_response(index, column, entry):
     return response
 
 
-def parse_responses(Survey, schema, data):
+def parse_responses(sm, Survey, schema, data, qid):
     index = build_index(Survey, schema)
 
     for responses in data:
