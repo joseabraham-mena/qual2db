@@ -463,20 +463,10 @@ def parse_response(index, column, entry):
     question_type = index['questions'][question_qid].type
     response.question_id = question_id
 
-    #if column in index['embedded_data']:
-    #    response.embedded_data_id = embedded_data_id = index['embedded_data'][column].id
-    #    response.textEntry = entry
-    #    return response
-
-    #question_qid = index['exportColumnMap'][column]['question']
-    #question_id = index['questions'][question_qid].id
-    #question_type = index['questions'][question_qid].type
-    #response.question_id = question_id
-
     try:
         subquestion_qid = index['exportColumnMap'][column]['subQuestion'].split('.')[-1]
         subquestion_id = index['subquestions'][question_qid][int(subquestion_qid)].id
-        response.subquestion_id = subquestion_id
+        response.answer_id = subquestion_id
     except:
         pass
 
