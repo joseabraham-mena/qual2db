@@ -16,7 +16,7 @@ qual_creds = {
     }
 
 sql_creds = {
-    'constr':configurations['MySQL_Credentials']['constr']
+    'constr':configurations['SQL_Credentials']['constr']
     }
 
 def main():
