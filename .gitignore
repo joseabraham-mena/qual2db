@@ -3,3 +3,7 @@
 *.db
 *.ini
 *.vs/*
+
+temp/
+
+\.vs/
